@@ -95,4 +95,5 @@ def get_model_config(
         trainer_args=trainer_args,
         torchtune_args=torchtune_args,
         _decouple_vllm_and_unsloth=config.get("_decouple_vllm_and_unsloth", False),
+        _use_pipeline_rl=config.get("_use_pipeline_rl", False),
     )

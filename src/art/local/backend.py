@@ -137,6 +137,7 @@ class LocalBackend(Backend):
         from ..torchtune.service import TorchtuneService
         from ..unsloth.decoupled_service import DecoupledUnslothService
         from ..unsloth.service import UnslothService
+        from .pipeline_rl_service import PipelineRLService
 
         if model.name not in self._services:
             config = get_model_config(
@@ -144,7 +145,9 @@ class LocalBackend(Backend):
                 output_dir=get_model_dir(model=model, art_path=self._path),
                 config=model._internal_config,
             )
-            if config.get("torchtune_args") is not None:
+            if config.get("_use_pipeline_rl", False):
+                service_class = PipelineRLService
+            elif config.get("torchtune_args") is not None:
                 service_class = TorchtuneService
             elif config.get("_decouple_vllm_and_unsloth", False):
                 service_class = DecoupledUnslothService

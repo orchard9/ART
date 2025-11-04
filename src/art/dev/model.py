@@ -122,6 +122,7 @@ class InternalModelConfig(TypedDict, total=False):
     trainer_args: "TrainerArgs"
     torchtune_args: TorchtuneArgs | None
     _decouple_vllm_and_unsloth: bool
+    _use_pipeline_rl: bool
 
 
 class InitArgs(TypedDict, total=False):
