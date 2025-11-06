@@ -165,7 +165,7 @@ class LocalBackend(Backend):
                 subprocess.run(["pkill", "-9", "model-service"])
                 if isinstance(
                     self._services[model.name],
-                    (UnslothService, DecoupledUnslothService),
+                    (UnslothService, DecoupledUnslothService, PipelineRLService),
                 ):
                     # To enable sleep mode, import peft before unsloth
                     # Unsloth will issue warnings, but everything appears to be okay
