@@ -329,7 +329,6 @@ class LocalBackend(Backend):
                 ) as response:
                     metrics = await response.text()
                 # Parse Prometheus metrics for running requests
-                logger.info(f"[BACKEND] metrics: {metrics}")
                 running_requests = 0
                 pending_requests = 0
                 for line in metrics.split("\n"):
@@ -337,6 +336,9 @@ class LocalBackend(Backend):
                         running_requests = int(float(line.split()[1]))
                     elif line.startswith("vllm:num_requests_waiting"):
                         pending_requests = int(float(line.split()[1]))
+                logger.info(
+                    f"[BACKEND] OPENAI server check passed: running requests {running_requests}, pending_requests: {pending_requests}"
+                )
                 # If there are no running or pending requests, send a health check
                 if running_requests == 0 and pending_requests == 0:
                     try:
