@@ -141,26 +141,42 @@ class LocalBackend(Backend):
         from .pipeline_rl_service import PipelineRLService
 
         if model.name not in self._services:
+            logger.info(f"[BACKEND] Creating service for model: {model.name}")
             config = get_model_config(
                 base_model=model.base_model,
                 output_dir=get_model_dir(model=model, art_path=self._path),
                 config=model._internal_config,
             )
+
+            # Determine service class
             if config.get("_use_pipeline_rl", False):
                 service_class = PipelineRLService
+                logger.info("[BACKEND] Using PipelineRLService")
+                trainer_gpu_ids = config.get("trainer_gpu_ids", [0])
+                inference_gpu_ids = config.get("inference_gpu_ids", None)
+                logger.info(f"[BACKEND]   Trainer GPUs: {trainer_gpu_ids}")
+                logger.info(f"[BACKEND]   Inference GPUs: {inference_gpu_ids}")
             elif config.get("torchtune_args") is not None:
                 service_class = TorchtuneService
+                logger.info("[BACKEND] Using TorchtuneService")
             elif config.get("_decouple_vllm_and_unsloth", False):
                 service_class = DecoupledUnslothService
+                logger.info("[BACKEND] Using DecoupledUnslothService")
             else:
                 service_class = UnslothService
+                logger.info("[BACKEND] Using UnslothService")
+
+            logger.info(f"[BACKEND] Initializing {service_class.__name__}...")
             self._services[model.name] = service_class(
                 model_name=model.name,
                 base_model=model.base_model,
                 config=config,
                 output_dir=get_model_dir(model=model, art_path=self._path),
             )
+            logger.info(f"[BACKEND] Service initialized: {service_class.__name__}")
+
             if not self._in_process:
+                logger.info("[BACKEND] Moving service to child process...")
                 # Kill all "model-service" processes to free up GPU memory
                 subprocess.run(["pkill", "-9", "model-service"])
                 if isinstance(
@@ -171,13 +187,19 @@ class LocalBackend(Backend):
                     # Unsloth will issue warnings, but everything appears to be okay
                     if config.get("engine_args", {}).get("enable_sleep_mode", False):
                         os.environ["IMPORT_PEFT"] = "1"
+                        logger.info("[BACKEND]   Set IMPORT_PEFT=1 for sleep mode")
                     # When moving the service to a child process, import unsloth
                     # early to maximize optimizations
                     os.environ["IMPORT_UNSLOTH"] = "1"
+                    logger.info("[BACKEND]   Set IMPORT_UNSLOTH=1")
                 self._services[model.name] = move_to_child_process(
                     self._services[model.name],
                     process_name="model-service",
                 )
+                # at this point model-service exists in child process
+                logger.info("[BACKEND] Service moved to child process")
+        else:
+            logger.info(f"[BACKEND] Reusing existing service for model: {model.name}")
         return self._services[model.name]
 
     def _get_packed_tensors(
@@ -291,12 +313,40 @@ class LocalBackend(Backend):
         model: TrainableModel,
         config: dev.OpenAIServerConfig | None = None,
     ) -> tuple[str, str]:
+        logger.info("=" * 80)
+        logger.info("[BACKEND] Preparing backend for training")
+        logger.info("=" * 80)
+        logger.info(f"[BACKEND] Model: {model.name}")
+        logger.info(f"[BACKEND] Base model: {model.base_model}")
+
+        # Check if this is PipelineRL
+        from ..dev.get_model_config import get_model_config
+
+        internal_config = get_model_config(
+            base_model=model.base_model,
+            output_dir=get_model_dir(model=model, art_path=self._path),
+            config=model._internal_config,
+        )
+        is_pipeline_rl = internal_config.get("_use_pipeline_rl", False)
+
+        logger.info("[BACKEND] Step 1: Getting service...")
         service = await self._get_service(model)
+
+        logger.info("[BACKEND] Step 2: Initialize process groups and vLLM")
+        if is_pipeline_rl:
+            await service.initialize_process_groups_and_vllm(config=config)
+
+        logger.info("[BACKEND] Step 3: Starting OpenAI server...")
         await service.start_openai_server(config=config)
         server_args = (config or {}).get("server_args", {})
 
         base_url = f"http://{server_args.get('host', '0.0.0.0')}:{server_args.get('port', 8000)}/v1"
         api_key = server_args.get("api_key", None) or "default"
+        logger.info("")
+        logger.info("[BACKEND] Step 3: OpenAI server started")
+        logger.info(f"[BACKEND]   Base URL: {base_url}")
+        logger.info(f"[BACKEND]   API Key: {api_key}")
+        logger.info("")
 
         def done_callback(_: asyncio.Task[None]) -> None:
             logger.info("OpenAI server Monitor done callback is called")
