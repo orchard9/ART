@@ -123,6 +123,7 @@ class InternalModelConfig(TypedDict, total=False):
     torchtune_args: TorchtuneArgs | None
     _decouple_vllm_and_unsloth: bool
     _use_pipeline_rl: bool
+    _async_rl: bool
     trainer_gpu_ids: list[int]
     inference_gpu_ids: list[int]
 

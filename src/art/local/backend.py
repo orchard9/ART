@@ -137,6 +137,7 @@ class LocalBackend(Backend):
         from ..dev.get_model_config import get_model_config
         # comment out because vllm.worker.multi_step_model_runner is not supported in vllm==0.10.2
         # from ..torchtune.service import TorchtuneService
+        from ..unsloth.async_service import AsyncService
         # from ..unsloth.decoupled_service import DecoupledUnslothService
         # from ..unsloth.service import UnslothService
         # from .pipeline_rl_service import PipelineRLService
@@ -157,6 +158,9 @@ class LocalBackend(Backend):
                 inference_gpu_ids = config.get("inference_gpu_ids", None)
                 logger.info(f"[BACKEND]   Trainer GPUs: {trainer_gpu_ids}")
                 logger.info(f"[BACKEND]   Inference GPUs: {inference_gpu_ids}")
+            elif config.get("_async_rl", False):
+                service_class = AsyncService
+                logger.info("[BACKEND] Using AsyncService")
             elif config.get("torchtune_args") is not None:
                 service_class = TorchtuneService
                 logger.info("[BACKEND] Using TorchtuneService")
