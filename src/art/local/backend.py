@@ -135,10 +135,11 @@ class LocalBackend(Backend):
 
     async def _get_service(self, model: TrainableModel) -> ModelService:
         from ..dev.get_model_config import get_model_config
-        from ..torchtune.service import TorchtuneService
-        from ..unsloth.decoupled_service import DecoupledUnslothService
-        from ..unsloth.service import UnslothService
-        from .pipeline_rl_service import PipelineRLService
+        # comment out because vllm.worker.multi_step_model_runner is not supported in vllm==0.10.2
+        # from ..torchtune.service import TorchtuneService
+        # from ..unsloth.decoupled_service import DecoupledUnslothService
+        # from ..unsloth.service import UnslothService
+        # from .pipeline_rl_service import PipelineRLService
 
         if model.name not in self._services:
             logger.info(f"[BACKEND] Creating service for model: {model.name}")
@@ -179,19 +180,19 @@ class LocalBackend(Backend):
                 logger.info("[BACKEND] Moving service to child process...")
                 # Kill all "model-service" processes to free up GPU memory
                 subprocess.run(["pkill", "-9", "model-service"])
-                if isinstance(
-                    self._services[model.name],
-                    (UnslothService, DecoupledUnslothService, PipelineRLService),
-                ):
-                    # To enable sleep mode, import peft before unsloth
-                    # Unsloth will issue warnings, but everything appears to be okay
-                    if config.get("engine_args", {}).get("enable_sleep_mode", False):
-                        os.environ["IMPORT_PEFT"] = "1"
-                        logger.info("[BACKEND]   Set IMPORT_PEFT=1 for sleep mode")
-                    # When moving the service to a child process, import unsloth
-                    # early to maximize optimizations
-                    os.environ["IMPORT_UNSLOTH"] = "1"
-                    logger.info("[BACKEND]   Set IMPORT_UNSLOTH=1")
+                # if isinstance(
+                #     self._services[model.name],
+                #     (UnslothService, DecoupledUnslothService, PipelineRLService),
+                # ):
+                #     # To enable sleep mode, import peft before unsloth
+                #     # Unsloth will issue warnings, but everything appears to be okay
+                #     if config.get("engine_args", {}).get("enable_sleep_mode", False):
+                #         os.environ["IMPORT_PEFT"] = "1"
+                #         logger.info("[BACKEND]   Set IMPORT_PEFT=1 for sleep mode")
+                #     # When moving the service to a child process, import unsloth
+                #     # early to maximize optimizations
+                #     os.environ["IMPORT_UNSLOTH"] = "1"
+                #     logger.info("[BACKEND]   Set IMPORT_UNSLOTH=1")
                 self._services[model.name] = move_to_child_process(
                     self._services[model.name],
                     process_name="model-service",
