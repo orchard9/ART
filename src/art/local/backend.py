@@ -135,6 +135,7 @@ class LocalBackend(Backend):
 
     async def _get_service(self, model: TrainableModel) -> ModelService:
         from ..dev.get_model_config import get_model_config
+
         # comment out because vllm.worker.multi_step_model_runner is not supported in vllm==0.10.2
         # from ..torchtune.service import TorchtuneService
         from ..unsloth.async_service import AsyncService

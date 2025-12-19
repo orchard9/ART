@@ -26,9 +26,11 @@ def get_model_config(
         model_name=base_model,
         use_async=True,
     )
-    if config.get("_decouple_vllm_and_unsloth", False) or config.get(
-        "_use_pipeline_rl", False
-    ) or config.get("_async_rl", False):
+    if (
+        config.get("_decouple_vllm_and_unsloth", False)
+        or config.get("_use_pipeline_rl", False)
+        or config.get("_async_rl", False)
+    ):
         init_args["fast_inference"] = False
         init_args.pop("disable_log_stats")
         init_args.pop("enable_prefix_caching")

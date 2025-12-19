@@ -4,6 +4,7 @@ import ctypes
 from typing import Any
 
 import torch
+
 # comment out because vllm.worker.multi_step_model_runner is not supported in vllm==0.10.2
 # from vllm.worker.multi_step_model_runner import MultiStepModelRunner
 
