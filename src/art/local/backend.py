@@ -141,7 +141,6 @@ class LocalBackend(Backend):
         from ..unsloth.async_service import AsyncService
         # from ..unsloth.decoupled_service import DecoupledUnslothService
         # from ..unsloth.service import UnslothService
-        # from .pipeline_rl_service import PipelineRLService
 
         if model.name not in self._services:
             logger.info(f"[BACKEND] Creating service for model: {model.name}")
@@ -152,14 +151,7 @@ class LocalBackend(Backend):
             )
 
             # Determine service class
-            if config.get("_use_pipeline_rl", False):
-                service_class = PipelineRLService
-                logger.info("[BACKEND] Using PipelineRLService")
-                trainer_gpu_ids = config.get("trainer_gpu_ids", [0])
-                inference_gpu_ids = config.get("inference_gpu_ids", None)
-                logger.info(f"[BACKEND]   Trainer GPUs: {trainer_gpu_ids}")
-                logger.info(f"[BACKEND]   Inference GPUs: {inference_gpu_ids}")
-            elif config.get("_async_rl", False):
+            if config.get("_async_rl", False):
                 service_class = AsyncService
                 logger.info("[BACKEND] Using AsyncService")
             elif config.get("torchtune_args") is not None:
@@ -187,7 +179,7 @@ class LocalBackend(Backend):
                 subprocess.run(["pkill", "-9", "model-service"])
                 # if isinstance(
                 #     self._services[model.name],
-                #     (UnslothService, DecoupledUnslothService, PipelineRLService),
+                #     (UnslothService, DecoupledUnslothService),
                 # ):
                 #     # To enable sleep mode, import peft before unsloth
                 #     # Unsloth will issue warnings, but everything appears to be okay
@@ -323,22 +315,8 @@ class LocalBackend(Backend):
         logger.info(f"[BACKEND] Model: {model.name}")
         logger.info(f"[BACKEND] Base model: {model.base_model}")
 
-        # Check if this is PipelineRL
-        from ..dev.get_model_config import get_model_config
-
-        internal_config = get_model_config(
-            base_model=model.base_model,
-            output_dir=get_model_dir(model=model, art_path=self._path),
-            config=model._internal_config,
-        )
-        is_pipeline_rl = internal_config.get("_use_pipeline_rl", False)
-
         logger.info("[BACKEND] Step 1: Getting service...")
         service = await self._get_service(model)
-
-        logger.info("[BACKEND] Step 2: Initialize process groups and vLLM")
-        if is_pipeline_rl:
-            await service.initialize_process_groups_and_vllm(config=config)
 
         logger.info("[BACKEND] Step 3: Starting OpenAI server...")
         await service.start_openai_server(config=config)

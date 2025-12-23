@@ -28,7 +28,6 @@ def get_model_config(
     )
     if (
         config.get("_decouple_vllm_and_unsloth", False)
-        or config.get("_use_pipeline_rl", False)
         or config.get("_async_rl", False)
     ):
         init_args["fast_inference"] = False
@@ -99,6 +98,5 @@ def get_model_config(
         trainer_args=trainer_args,
         torchtune_args=torchtune_args,
         _decouple_vllm_and_unsloth=config.get("_decouple_vllm_and_unsloth", False),
-        _use_pipeline_rl=config.get("_use_pipeline_rl", False),
         _async_rl=config.get("_async_rl", False),
     )
