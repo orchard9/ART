@@ -151,22 +151,25 @@ This dual-engine approach will fail since V0 is removed.
 ### Phase 2: Code Changes (Priority Order)
 
 **P0 - Blockers:**
-- [ ] Migrate `src/art/unsloth/state.py` from V0 to V1 engine
-  - Remove `os.environ["VLLM_USE_V1"] = "0"`
-  - Replace `AsyncLLMEngine` with `AsyncLLM` (V1)
-  - Update all V0-specific imports
-- [ ] Remove `num_lookahead_slots` from `src/art/dev/engine.py`
-- [ ] Remove `lora_extra_vocab_size` from `src/art/dev/engine.py`
+- [x] Migrate `src/art/unsloth/state.py` from V0 to V1 engine
+  - Removed `os.environ["VLLM_USE_V1"] = "0"`
+  - Replaced `AsyncLLMEngine` with `AsyncLLM` (V1)
+  - Updated all V0-specific imports
+  - Simplified vLLMState.train_mode() for V1 semantics
+- [x] Remove `num_lookahead_slots` from `src/art/dev/engine.py`
+- [x] Remove `lora_extra_vocab_size` from `src/art/dev/engine.py`
 
 **P1 - Required:**
-- [ ] Update `pyproject.toml` version constraint to `vllm>=0.13.0`
-- [ ] Add explicit default for `seed` in `src/art/torchtune/config.py`
+- [x] Update `pyproject.toml` version constraint to `vllm>=0.13.0`
+- [x] Update `pyproject.toml` torch constraint to `torch>=2.9.0`
+- [x] Add explicit default for `seed` in `src/art/torchtune/config.py`
 - [ ] Remove xformers from dependencies (deprecated)
 
 **P2 - Cleanup:**
-- [ ] Unify engine usage (everything on V1)
+- [x] Unify engine usage (everything on V1)
+- [x] Deprecated `create_engine_pause_and_resume_functions` (V0 specific)
 - [ ] Update any CLI scripts for renamed PassConfig flags
-- [ ] Review and update CUDA/PyTorch requirements
+- [x] Updated CUDA/PyTorch requirements in pyproject.toml
 
 ### Phase 3: Testing
 

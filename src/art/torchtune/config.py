@@ -88,7 +88,7 @@ class RecipeConfig(BaseModel):
     dtype: Literal["fp32", "bf16"] = Field(default="bf16")
 
     # Training parameters
-    seed: Optional[int] = Field(default=None)
+    seed: Optional[int] = Field(default=42)  # vLLM 0.12+ requires explicit seed
     epochs: int = Field(default=1, gt=0)
     max_steps_per_epoch: Optional[int] = Field(default=None, gt=0)
     gradient_accumulation_steps: int = Field(default=1, gt=0)

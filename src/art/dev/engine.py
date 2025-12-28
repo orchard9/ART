@@ -68,7 +68,7 @@ class EngineArgs(TypedDict, total=False):
     max_prompt_adapters: int
     max_prompt_adapter_token: int
     fully_sharded_loras: bool
-    lora_extra_vocab_size: int
+    # lora_extra_vocab_size: int  # REMOVED in vLLM 0.12
     long_lora_scaling_factors: Tuple[float] | None
     lora_dtype: str | None
     max_cpu_loras: int | None
@@ -77,7 +77,7 @@ class EngineArgs(TypedDict, total=False):
     multi_step_stream_outputs: bool
     ray_workers_use_nsight: bool
     num_gpu_blocks_override: int | None
-    num_lookahead_slots: int
+    # num_lookahead_slots: int  # REMOVED in vLLM 0.12
     model_loader_extra_config: dict | None
     ignore_patterns: str | list[str] | None
     preemption_mode: str | None

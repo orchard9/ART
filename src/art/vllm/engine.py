@@ -10,9 +10,9 @@ from typing import Any, Callable, Coroutine, Generator, ParamSpec, TypeVar, cast
 
 import cloudpickle
 import vllm
-from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.v1.engine.async_llm import AsyncLLM
 from vllm.v1.worker.gpu_worker import Worker
+# Note: AsyncLLMEngine (V0) removed in vLLM 0.11+
 
 from .patches import patch_allocator
 
@@ -51,40 +51,39 @@ async def get_llm(args: vllm.AsyncEngineArgs) -> AsyncLLM:
 
 
 def create_engine_pause_and_resume_functions(
-    engine: AsyncLLMEngine,
+    engine: AsyncLLM,
 ) -> tuple[
     Callable[[], Coroutine[Any, Any, None]], Callable[[], Coroutine[Any, Any, None]]
 ]:
     """
-    Patches the vLLM engine and returns a pair of functions for pausing and resuming
-    request processing respectively.
+    DEPRECATED: V1 engine uses sleep/wake_up instead of pause/resume.
+
+    This function is kept for backward compatibility but should not be used
+    with vLLM 0.11+. Use AsyncLLM.sleep() and AsyncLLM.wake_up() instead.
 
     Args:
-        engine: The AsyncLLMEngine to patch.
+        engine: The AsyncLLM engine.
 
     Returns:
-        A tuple of (pause_engine, resume_engine) async functions.
+        A tuple of (pause_engine, resume_engine) async functions that are no-ops.
     """
-    _engine_step = engine.engine_step
-    resume_event = asyncio.Event()
-    resume_event.set()
-    engine_step_event = asyncio.Event()
-
-    async def engine_step(virtual_engine: int) -> bool:
-        engine_step_event.set()
-        await resume_event.wait()
-        return await _engine_step(virtual_engine)
-
-    engine.engine_step = engine_step
+    import warnings
+    warnings.warn(
+        "create_engine_pause_and_resume_functions is deprecated for V1 engine. "
+        "Use engine.sleep() and engine.wake_up() instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
 
     async def pause_engine() -> None:
-        resume_event.clear()
-        if engine.engine.has_unfinished_requests():
-            engine_step_event.clear()
-            await engine_step_event.wait()
+        # V1 engine doesn't have the same pause semantics
+        # Use sleep() instead for memory management
+        pass
 
     async def resume_engine() -> None:
-        resume_event.set()
+        # V1 engine doesn't have the same resume semantics
+        # Use wake_up() instead
+        pass
 
     return pause_engine, resume_engine
 
