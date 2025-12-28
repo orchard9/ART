@@ -145,7 +145,8 @@ This dual-engine approach will fail since V0 is removed.
 - [x] Document breaking changes v0.11-v0.13
 - [x] Audit ART codebase for affected APIs
 - [x] Identify all vLLM usage patterns
-- [ ] Create test plan
+- [x] Create test plan
+- [x] **Validate vLLM 0.13 on Blackwell hardware (msd6079.mjhst.com)**
 
 ### Phase 2: Code Changes (Priority Order)
 
@@ -169,10 +170,11 @@ This dual-engine approach will fail since V0 is removed.
 
 ### Phase 3: Testing
 
+- [x] Test basic model loading/inference with vLLM 0.13 (Qwen3-4B ✓)
 - [ ] Run existing tests with vLLM 0.13
 - [ ] Test LoRA loading/inference (both Unsloth and Torchtune paths)
 - [ ] Test multi-GPU (tensor_parallel)
-- [ ] Test all supported models (Qwen3-4B, Qwen3-8B)
+- [ ] Test all supported models (Qwen3-4B ✓, Qwen3-8B)
 - [ ] Benchmark performance comparison vs v0.10
 
 ### Phase 4: Documentation
@@ -203,9 +205,61 @@ This dual-engine approach will fail since V0 is removed.
 |---------|-------------|---------|
 | Anthropic API | `/v1/messages` endpoint | Anthropic client compat |
 | Whisper speedup | ~3x faster than v0.12 | Audio model perf |
-| Blackwell support | SM103 (GB300) | Future hardware |
+| Blackwell support | SM103 (GB300), SM120 (RTX PRO 6000) | Future hardware |
 | Async scheduling fixes | Correctness improvements | Reliability |
 | Binary embeddings | `encoding_format=bytes_only` | Embedding efficiency |
+
+---
+
+## Blackwell SM120 Validation (2025-12-28)
+
+Successfully validated vLLM 0.13.0 on NVIDIA RTX PRO 6000 Blackwell (SM120, 98GB VRAM).
+
+### Test Configuration
+
+| Component | Version |
+|-----------|---------|
+| vLLM | 0.13.0 |
+| PyTorch | 2.9.0+cu128 |
+| CUDA Toolkit | 12.8 |
+| Driver | 570.195.03 |
+| GPU | RTX PRO 6000 Blackwell Max-Q (98GB) |
+
+### Key Requirements for Blackwell
+
+1. **CUDA Toolkit Required**: FlashInfer backend needs nvcc for JIT compilation
+   ```bash
+   sudo apt-get install cuda-toolkit-12-8
+   export CUDA_HOME=/usr/local/cuda-12.8
+   ```
+
+2. **Use FLASHINFER Backend**: Default flash-attn backend fails on SM120
+   ```bash
+   # Deprecated in v0.14 - use --attention-config.backend instead
+   export VLLM_ATTENTION_BACKEND=FLASHINFER
+   ```
+
+3. **Fix HuggingFace Cache Permissions**: If previously run as root
+   ```bash
+   sudo chown -R $USER:$USER ~/.cache/huggingface/
+   ```
+
+### Performance Results
+
+```
+Model: Qwen/Qwen3-4B
+Memory: 7.5 GiB model, 72 GiB KV cache available
+Speed: ~125 tokens/sec output
+Max concurrency: 256x for 2048 token requests
+```
+
+### Verified Working
+
+- [x] vLLM 0.13.0 installation via pip
+- [x] V1 engine (only option, V0 removed)
+- [x] FLASHINFER attention backend on SM120
+- [x] Qwen3-4B model loading and inference
+- [x] CUDA graph capture (FULL_AND_PIECEWISE mode)
 
 ---
 
