@@ -177,6 +177,7 @@ This dual-engine approach will fail since V0 is removed.
 ### Phase 3: Testing
 
 - [x] Test basic model loading/inference with vLLM 0.13 (Qwen3-4B ✓)
+- [x] Test Unsloth FastLanguageModel + vLLM 0.13 integration ✓
 - [ ] Run existing tests with vLLM 0.13
 - [ ] Test LoRA loading/inference (both Unsloth and Torchtune paths)
 - [ ] Test multi-GPU (tensor_parallel)
@@ -266,6 +267,24 @@ Max concurrency: 256x for 2048 token requests
 - [x] FLASHINFER attention backend on SM120
 - [x] Qwen3-4B model loading and inference
 - [x] CUDA graph capture (FULL_AND_PIECEWISE mode)
+- [x] Unsloth 2025.12.9 + vLLM 0.13 integration
+- [x] FastLanguageModel with fast_inference=True
+
+### Unsloth Integration Test (2025-12-28)
+
+Successfully validated Unsloth 2025.12.9 with vLLM 0.13.0 backend:
+
+```
+Model: Qwen/Qwen3-4B
+Unsloth: 2025.12.9
+vLLM Backend: 0.13.0 (V1 engine)
+Result: PASSED - FastLanguageModel loads with vLLM inference
+```
+
+**Key fixes for integration:**
+1. Pin torch==2.9.0 (Unsloth installs 2.9.1 which conflicts with vLLM)
+2. Remove xformers (vLLM 0.13 uses flashinfer instead)
+3. Use multiprocessing guard (`if __name__ == "__main__":`)
 
 ---
 
