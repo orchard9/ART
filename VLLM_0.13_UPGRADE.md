@@ -163,7 +163,10 @@ This dual-engine approach will fail since V0 is removed.
 - [x] Update `pyproject.toml` version constraint to `vllm>=0.13.0`
 - [x] Update `pyproject.toml` torch constraint to `torch>=2.9.0`
 - [x] Add explicit default for `seed` in `src/art/torchtune/config.py`
-- [ ] Remove xformers from dependencies (deprecated)
+- [x] Update Unsloth to `>=2025.12.9` (supports vLLM 0.12+)
+- [x] Update unsloth-zoo to `>=2025.12.7`
+- [x] Update transformers to `>=4.57.1` (required by Unsloth 2025.12+)
+- [x] xformers is transitive dep, not directly controlled (vLLM 0.13 uses flash-attn/flashinfer)
 
 **P2 - Cleanup:**
 - [x] Unify engine usage (everything on V1)
